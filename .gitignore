@@ -164,5 +164,3 @@ tmp/
 # Backup files
 *.bak
 *.backup
-.env
-.env
