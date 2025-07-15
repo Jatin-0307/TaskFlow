@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-edit"></i>
+        Edit Task
+    </h1>
+    <p class="page-subtitle">Update task details and assignments</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-pencil-alt"></i>
+            Task Details
+        </h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="editTaskForm">
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    <i class="fas fa-heading"></i> Task Title *
+                </label>
+                <input type="text" 
+                       id="title" 
+                       name="title" 
+                       class="form-input" 
+                       required 
+                       value="{{ task.title }}"
+                       maxlength="200">
+                <small class="text-muted">Choose a concise yet descriptive title for your task</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    <i class="fas fa-align-left"></i> Description
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          class="form-input form-textarea" 
+                          rows="4">{{ task.description if task.description else '' }}</textarea>
+                <small class="text-muted">Provide detailed information about what needs to be done</small>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 1; margin-right: 15px;">
+                    <label for="priority" class="form-label">
+                        <i class="fas fa-exclamation-triangle"></i> Priority *
+                    </label>
+                    <select id="priority" name="priority" class="form-input form-select" required>
+                        <option value="Low" {% if task.priority == 'Low' %}selected{% endif %}>
+                            Low Priority
+                        </option>
+                        <option value="Medium" {% if task.priority == 'Medium' %}selected{% endif %}>
+                            Medium Priority
+                        </option>
+                        <option value="High" {% if task.priority == 'High' %}selected{% endif %}>
+                            High Priority
+                        </option>
+                        <option value="Critical" {% if task.priority == 'Critical' %}selected{% endif %}>
+                            Critical Priority
+                        </option>
+                    </select>
+                    <small class="text-muted">Set the urgency level for this task</small>
+                </div>
+                
+                <div class="form-group" style="flex: 1;">
+                    <label for="assignee_email" class="form-label">
+                        <i class="fas fa-user-tag"></i> Assign to User (Optional)
+                    </label>
+                    <input type="email" 
+                           id="assignee_email" 
+                           name="assignee_email" 
+                           class="form-input" 
+                           placeholder="Enter user's email address"
+                           value="{{ task.assignee.email if task.assignee else '' }}">
+                    <small class="text-muted">Enter the email of the person you want to assign this task to</small>
+                </div>
+            </div>
+            
+            <div class="current-assignment mb-3">
+                <h4>Current Assignment</h4>
+                <div class="assignment-info">
+                    {% if task.assignee %}
+                        <div class="assigned-user">
+                            <i class="fas fa-user-tag text-success"></i>
+                            <strong>Assigned to:</strong> {{ task.get_assignee_name() }} ({{ task.assignee.email }})
+                        </div>
+                    {% else %}
+                        <div class="unassigned">
+                            <i class="fas fa-user-slash text-muted"></i>
+                            <span class="text-muted">Currently unassigned</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+                <a href="{{ url_for('view_task', task_id=task.id) }}" class="btn btn-outline">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </a>
+                {% if current_user.is_admin or task.created_by == current_user.id %}
+                    <button type="button" class="btn btn-danger" data-task-id="{{ task.id }}" id="deleteTaskBtn">
+                        <i class="fas fa-trash"></i>
+                        Delete Task
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Task History Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-history"></i>
+            Task Information
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="history-grid">
+            <div class="history-item">
+                <h4><i class="fas fa-calendar-plus text-primary"></i> Created</h4>
+                <p>{{ task.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                <small class="text-muted">by {{ task.get_creator_name() }}</small>
+            </div>
+            
+            <div class="history-item">
+                <h4><i class="fas fa-calendar-edit text-info"></i> Last Updated</h4>
+                <p>{{ task.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                <small class="text-muted">{{ task.get_time_since_created() }}</small>
+            </div>
+            
+            <div class="history-item">
+                <h4><i class="fas fa-tags text-warning"></i> Current Status</h4>
+                <span class="task-status {{ task.get_status_color() }}">
+                    {{ task.status }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Tips -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-lightbulb"></i>
+            Editing Tips
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="tips-grid">
+            <div class="tip">
+                <h4><i class="fas fa-save text-success"></i> Save Changes</h4>
+                <p>Remember to save your changes when you're done editing. Unsaved changes will be lost.</p>
+            </div>
+            
+            <div class="tip">
+                <h4><i class="fas fa-user-tag text-info"></i> Reassignment</h4>
+                <p>You can reassign the task by changing the email address. Leave empty to unassign.</p>
+            </div>
+            
+            <div class="tip">
+                <h4><i class="fas fa-exclamation-triangle text-warning"></i> Priority Changes</h4>
+                <p>Changing priority affects how the task appears in dashboards and task lists.</p>
+            </div>
+            
+            <div class="tip">
+                <h4><i class="fas fa-eye text-secondary"></i> Status Updates</h4>
+                <p>To change task status, use the task detail view after saving your edits.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-start;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.current-assignment {
+    background-color: var(--surface-secondary);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.current-assignment h4 {
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.assignment-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.assigned-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.unassigned {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.history-item {
+    background-color: var(--surface-secondary);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.history-item h4 {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.history-item p {
+    margin-bottom: 5px;
+    color: var(--text-secondary);
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.tip {
+    padding: 15px;
+    background-color: var(--surface-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.tip h4 {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.tip p {
+    margin-bottom: 0;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-group {
+        margin-right: 0 !important;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .history-grid,
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('editTaskForm');
+    const titleInput = document.getElementById('title');
+    const emailInput = document.getElementById('assignee_email');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validate required fields
+        if (!validateForm('editTaskForm')) {
+            e.preventDefault();
+            showNotification('Please fill in all required fields', 'error');
+            isValid = false;
+        }
+        
+        // Validate email format if provided
+        if (isValid && emailInput.value.trim() && !validateEmail(emailInput.value)) {
+            e.preventDefault();
+            showNotification('Please enter a valid email address for the assignee', 'error');
+            emailInput.style.borderColor = 'var(--error-color)';
+            isValid = false;
+        }
+        
+        // Validate title length
+        if (isValid && titleInput.value.trim().length < 3) {
+            e.preventDefault();
+            showNotification('Task title must be at least 3 characters long', 'error');
+            titleInput.style.borderColor = 'var(--error-color)';
+            isValid = false;
+        }
+    });
+    
+    // Reset border colors on input
+    titleInput.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border-color)';
+    });
+    
+    emailInput.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border-color)';
+    });
+    
+    // Character counter for title
+    const titleCounter = document.createElement('small');
+    titleCounter.className = 'text-muted';
+    titleCounter.style.float = 'right';
+    titleInput.parentNode.appendChild(titleCounter);
+    
+    function updateTitleCounter() {
+        const remaining = 200 - titleInput.value.length;
+        titleCounter.textContent = `${remaining} characters remaining`;
+        
+        if (remaining < 20) {
+            titleCounter.style.color = 'var(--warning-color)';
+        } else {
+            titleCounter.style.color = 'var(--text-muted)';
+        }
+    }
+    
+    titleInput.addEventListener('input', updateTitleCounter);
+    updateTitleCounter();
+    
+    // Handle delete button click
+    const deleteBtn = document.getElementById('deleteTaskBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            deleteTask(taskId);
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

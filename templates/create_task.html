@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-plus"></i>
+        Create New Task
+    </h1>
+    <p class="page-subtitle">Add a new task to your project</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-edit"></i>
+            Task Details
+        </h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="createTaskForm">
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    <i class="fas fa-heading"></i> Task Title *
+                </label>
+                <input type="text" 
+                       id="title" 
+                       name="title" 
+                       class="form-input" 
+                       required 
+                       placeholder="Enter a clear, descriptive task title"
+                       maxlength="200">
+                <small class="text-muted">Choose a concise yet descriptive title for your task</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    <i class="fas fa-align-left"></i> Description
+                </label>
+                <textarea id="description" 
+                          name="description" 
+                          class="form-input form-textarea" 
+                          placeholder="Provide detailed information about the task, requirements, and expected outcomes"
+                          rows="4"></textarea>
+                <small class="text-muted">Provide detailed information about what needs to be done</small>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex: 1; margin-right: 15px;">
+                    <label for="priority" class="form-label">
+                        <i class="fas fa-exclamation-triangle"></i> Priority *
+                    </label>
+                    <select id="priority" name="priority" class="form-input form-select" required>
+                        <option value="Low">
+                            <i class="fas fa-arrow-down"></i> Low Priority
+                        </option>
+                        <option value="Medium" selected>
+                            <i class="fas fa-minus"></i> Medium Priority
+                        </option>
+                        <option value="High">
+                            <i class="fas fa-arrow-up"></i> High Priority
+                        </option>
+                        <option value="Critical">
+                            <i class="fas fa-exclamation-circle"></i> Critical Priority
+                        </option>
+                    </select>
+                    <small class="text-muted">Set the urgency level for this task</small>
+                </div>
+                
+                <div class="form-group" style="flex: 1;">
+                    <label for="assignee_email" class="form-label">
+                        <i class="fas fa-user-tag"></i> Assign to User (Optional)
+                    </label>
+                    <input type="email" 
+                           id="assignee_email" 
+                           name="assignee_email" 
+                           class="form-input" 
+                           placeholder="Enter user's email address">
+                    <small class="text-muted">Enter the email of the person you want to assign this task to</small>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Create Task
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Help Card -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-lightbulb"></i>
+            Task Creation Tips
+        </h3>
+    </div>
+    <div class="card-body">
+        <div class="tips-grid">
+            <div class="tip">
+                <h4><i class="fas fa-heading text-primary"></i> Clear Titles</h4>
+                <p>Use specific, action-oriented titles that clearly communicate what needs to be done.</p>
+                <small class="text-muted">Example: "Implement user authentication system" instead of "Work on login"</small>
+            </div>
+            
+            <div class="tip">
+                <h4><i class="fas fa-align-left text-info"></i> Detailed Descriptions</h4>
+                <p>Include acceptance criteria, requirements, and any relevant context or links.</p>
+                <small class="text-muted">Help your team understand exactly what success looks like</small>
+            </div>
+            
+            <div class="tip">
+                <h4><i class="fas fa-exclamation-triangle text-warning"></i> Appropriate Priority</h4>
+                <p>Set priority levels based on business impact and urgency to help with task prioritization.</p>
+                <small class="text-muted">Critical: Blocking issues, High: Important features, Medium: Standard work, Low: Nice-to-have</small>
+            </div>
+            
+            <div class="tip">
+                <h4><i class="fas fa-user-tag text-success"></i> Smart Assignment</h4>
+                <p>Assign tasks to team members who have the right skills and availability.</p>
+                <small class="text-muted">You can also leave tasks unassigned and let team members pick them up</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-start;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.tip {
+    padding: 20px;
+    background-color: var(--surface-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.tip h4 {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+}
+
+.tip p {
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .form-group {
+        margin-right: 0 !important;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createTaskForm');
+    const titleInput = document.getElementById('title');
+    const emailInput = document.getElementById('assignee_email');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validate required fields
+        if (!validateForm('createTaskForm')) {
+            e.preventDefault();
+            showNotification('Please fill in all required fields', 'error');
+            isValid = false;
+        }
+        
+        // Validate email format if provided
+        if (isValid && emailInput.value.trim() && !validateEmail(emailInput.value)) {
+            e.preventDefault();
+            showNotification('Please enter a valid email address for the assignee', 'error');
+            emailInput.style.borderColor = 'var(--error-color)';
+            isValid = false;
+        }
+        
+        // Validate title length
+        if (isValid && titleInput.value.trim().length < 3) {
+            e.preventDefault();
+            showNotification('Task title must be at least 3 characters long', 'error');
+            titleInput.style.borderColor = 'var(--error-color)';
+            isValid = false;
+        }
+    });
+    
+    // Reset border colors on input
+    titleInput.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border-color)';
+    });
+    
+    emailInput.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border-color)';
+    });
+    
+    // Character counter for title
+    const titleCounter = document.createElement('small');
+    titleCounter.className = 'text-muted';
+    titleCounter.style.float = 'right';
+    titleInput.parentNode.appendChild(titleCounter);
+    
+    function updateTitleCounter() {
+        const remaining = 200 - titleInput.value.length;
+        titleCounter.textContent = `${remaining} characters remaining`;
+        
+        if (remaining < 20) {
+            titleCounter.style.color = 'var(--warning-color)';
+        } else {
+            titleCounter.style.color = 'var(--text-muted)';
+        }
+    }
+    
+    titleInput.addEventListener('input', updateTitleCounter);
+    updateTitleCounter();
+});
+</script>
+{% endblock %}
+{% endblock %}

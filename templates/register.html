@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Register - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="card">
+        <div class="card-header text-center">
+            <h2 class="card-title">
+                <i class="fas fa-user-plus"></i>
+                Create Your TaskFlow Account
+            </h2>
+            <p class="text-muted">Join TaskFlow and start managing your projects efficiently.</p>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="registerForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           class="form-input" 
+                           required 
+                           placeholder="Choose a unique username"
+                           autocomplete="username">
+                    <small class="text-muted">Choose a unique username for your account</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">
+                        <i class="fas fa-envelope"></i> Email Address
+                    </label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-input" 
+                           required 
+                           placeholder="Enter your email address"
+                           autocomplete="email">
+                    <small class="text-muted">Used for task assignments and notifications</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock"></i> Password
+                    </label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           class="form-input" 
+                           required 
+                           placeholder="Create a strong password"
+                           autocomplete="new-password">
+                    <small class="text-muted">Choose a strong password with at least 6 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" 
+                               id="is_admin" 
+                               name="is_admin" 
+                               class="form-checkbox">
+                        <label for="is_admin" class="checkbox-label">
+                            <i class="fas fa-users-cog"></i>
+                            Register as Administrator
+                        </label>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Administrators can view all tasks and manage the entire system
+                    </small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+            </form>
+            
+            <div class="text-center">
+                <p class="text-muted">Already have an account?</p>
+                <a href="{{ url_for('login') }}" class="btn btn-outline">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In Instead
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    
+    </div>
+</div>
+
+<style>
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.form-checkbox {
+    width: auto;
+    margin: 0;
+}
+
+.checkbox-label {
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.account-types {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.account-type {
+    background-color: var(--surface-secondary);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.account-type-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.account-features {
+    list-style: none;
+    padding: 0;
+}
+
+.account-features li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.account-features li:last-child {
+    margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+    .account-types {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('registerForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validate form completion
+        if (!validateForm('registerForm')) {
+            e.preventDefault();
+            showNotification('Please fill in all required fields', 'error');
+            isValid = false;
+        }
+        
+        // Validate email format
+        if (isValid && !validateEmail(emailInput.value)) {
+            e.preventDefault();
+            showNotification('Please enter a valid email address', 'error');
+            emailInput.style.borderColor = 'var(--error-color)';
+            isValid = false;
+        }
+        
+        // Validate password length
+        if (isValid && passwordInput.value.length < 6) {
+            e.preventDefault();
+            showNotification('Password must be at least 6 characters long', 'error');
+            passwordInput.style.borderColor = 'var(--error-color)';
+            isValid = false;
+        }
+    });
+    
+    // Reset border colors on input
+    emailInput.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border-color)';
+    });
+    
+    passwordInput.addEventListener('input', function() {
+        this.style.borderColor = 'var(--border-color)';
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

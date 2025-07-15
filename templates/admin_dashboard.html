@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-users-cog"></i>
+        Admin Dashboard
+    </h1>
+    <p class="page-subtitle">System overview and management console</p>
+</div>
+
+<!-- System Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ task_stats.total }}</div>
+        <div class="stat-label">
+            <i class="fas fa-tasks"></i>
+            Total Tasks
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ task_stats.todo }}</div>
+        <div class="stat-label">
+            <i class="fas fa-clock"></i>
+            To Do
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ task_stats.in_progress }}</div>
+        <div class="stat-label">
+            <i class="fas fa-spinner"></i>
+            In Progress
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ task_stats.done }}</div>
+        <div class="stat-label">
+            <i class="fas fa-check-circle"></i>
+            Completed
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ users|length }}</div>
+        <div class="stat-label">
+            <i class="fas fa-users"></i>
+            Total Users
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            {{ users|selectattr("is_admin", "equalto", true)|list|length }}
+        </div>
+        <div class="stat-label">
+            <i class="fas fa-user-shield"></i>
+            Administrators
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-tools"></i>
+            Admin Actions
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="flex gap-4">
+            <a href="{{ url_for('create_task') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Create New Task
+            </a>
+            <button onclick="location.reload()" class="btn btn-outline">
+                <i class="fas fa-sync-alt"></i>
+                Refresh Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- All Tasks Table -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-list"></i>
+            All Tasks ({{ tasks|length }})
+        </h2>
+    </div>
+    <div class="card-body">
+        {% if tasks %}
+            <div class="table-controls mb-3">
+                <input type="text" 
+                       id="taskSearch" 
+                       class="form-input" 
+                       placeholder="Search tasks..." 
+                       style="max-width: 300px;">
+            </div>
+            
+            <div class="table-responsive">
+                <table class="data-table" id="tasksTable">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Creator</th>
+                            <th>Assignee</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>
+                                        <a href="{{ url_for('view_task', task_id=task.id) }}">
+                                            {{ task.title }}
+                                        </a>
+                                    </strong>
+                                    {% if task.description %}
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ task.description[:50] }}{% if task.description|length > 50 %}...{% endif %}
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="task-status {{ task.get_status_color() }}">
+                                    {{ task.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="task-priority {{ task.get_priority_color() }}">
+                                    {{ task.priority }}
+                                </span>
+                            </td>
+                            <td>
+                                <i class="fas fa-user"></i>
+                                {{ task.get_creator_name() }}
+                            </td>
+                            <td>
+                                {% if task.assignee %}
+                                    <i class="fas fa-user-tag"></i>
+                                    {{ task.get_assignee_name() }}
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-user-slash"></i>
+                                        Unassigned
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ task.get_time_since_created() }}</small>
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <a href="{{ url_for('view_task', task_id=task.id) }}" 
+                                       class="btn btn-sm btn-outline" 
+                                       title="View Task">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_task', task_id=task.id) }}" 
+                                       class="btn btn-sm btn-secondary" 
+                                       title="Edit Task">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center">
+                <div class="empty-state">
+                    <i class="fas fa-tasks" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+                    <h3>No Tasks Found</h3>
+                    <p class="text-muted">No tasks have been created yet.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Users Overview -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-users"></i>
+            Users Overview ({{ users|length }})
+        </h2>
+    </div>
+    <div class="card-body">
+        {% if users %}
+            <div class="table-controls mb-3">
+                <input type="text" 
+                       id="userSearch" 
+                       class="form-input" 
+                       placeholder="Search users..." 
+                       style="max-width: 300px;">
+            </div>
+            
+            <div class="table-responsive">
+                <table class="data-table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Tasks Created</th>
+                            <th>Tasks Assigned</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-user"></i>
+                                    <strong>{{ user.username }}</strong>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_admin %}
+                                    <span class="admin-badge">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Administrator
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-user"></i>
+                                        User
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-primary">
+                                    {{ user.get_task_count() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-secondary">
+                                    {{ user.get_assigned_task_count() }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ user.created_at.strftime('%Y-%m-%d') }}</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center">
+                <div class="empty-state">
+                    <i class="fas fa-users" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+                    <h3>No Users Found</h3>
+                    <p class="text-muted">No users have been registered yet.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.table-responsive {
+    overflow-x: auto;
+}
+
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.badge-secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.empty-state {
+    padding: 40px 20px;
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .data-table {
+        font-size: 0.875rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px 10px;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize search functionality for tasks table
+    if (document.getElementById('tasksTable')) {
+        searchTable('taskSearch', 'tasksTable');
+    }
+    
+    // Initialize search functionality for users table
+    if (document.getElementById('usersTable')) {
+        searchTable('userSearch', 'usersTable');
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

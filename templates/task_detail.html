@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.title }} - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="page-title">{{ task.title }}</h1>
+            <p class="page-subtitle">
+                Task #{{ task.id }} • Created {{ task.get_time_since_created() }}
+            </p>
+        </div>
+        <div class="task-actions-header">
+            {% if current_user.is_admin or task.created_by == current_user.id %}
+                <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-edit"></i>
+                    Edit Task
+                </a>
+            {% endif %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="task-detail-grid">
+    <!-- Main Task Information -->
+    <div class="main-content-area">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fas fa-info-circle"></i>
+                    Task Details
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if task.description %}
+                    <div class="task-description-full">
+                        <h4>Description</h4>
+                        <div class="description-content">
+                            {{ task.description|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="no-description">
+                        <i class="fas fa-file-alt text-muted"></i>
+                        <p class="text-muted">No description provided for this task.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Task Actions -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-cogs"></i>
+                    Quick Actions
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="action-buttons">
+                    {% if task.status == 'To Do' and (current_user.is_admin or task.assigned_to == current_user.id or task.created_by == current_user.id) %}
+                        <button class="btn btn-warning status-btn" data-task-id="{{ task.id }}" data-status="In Progress">
+                            <i class="fas fa-play"></i>
+                            Start Working
+                        </button>
+                    {% endif %}
+                    
+                    {% if task.status == 'In Progress' and (current_user.is_admin or task.assigned_to == current_user.id or task.created_by == current_user.id) %}
+                        <button class="btn btn-success status-btn" data-task-id="{{ task.id }}" data-status="Done">
+                            <i class="fas fa-check"></i>
+                            Mark Complete
+                        </button>
+                        <button class="btn btn-secondary status-btn" data-task-id="{{ task.id }}" data-status="To Do">
+                            <i class="fas fa-undo"></i>
+                            Move to To Do
+                        </button>
+                    {% endif %}
+                    
+                    {% if task.status == 'Done' and (current_user.is_admin or task.assigned_to == current_user.id or task.created_by == current_user.id) %}
+                        <button class="btn btn-warning status-btn" data-task-id="{{ task.id }}" data-status="In Progress">
+                            <i class="fas fa-redo"></i>
+                            Reopen Task
+                        </button>
+                    {% endif %}
+                    
+                    {% if current_user.is_admin or task.created_by == current_user.id %}
+                        <button class="btn btn-danger" data-task-id="{{ task.id }}" id="deleteTaskBtn">
+                            <i class="fas fa-trash"></i>
+                            Delete Task
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar with Task Metadata -->
+    <div class="sidebar-area">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-tags"></i>
+                    Task Information
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="task-meta-list">
+                    <div class="meta-item">
+                        <label>Status</label>
+                        <span class="task-status {{ task.get_status_color() }}">
+                            {{ task.status }}
+                        </span>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Priority</label>
+                        <span class="task-priority {{ task.get_priority_color() }}">
+                            {{ task.priority }}
+                        </span>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Created By</label>
+                        <div class="user-info">
+                            <i class="fas fa-user"></i>
+                            {{ task.get_creator_name() }}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Assigned To</label>
+                        <div class="user-info">
+                            {% if task.assignee %}
+                                <i class="fas fa-user-tag"></i>
+                                {{ task.get_assignee_name() }}
+                            {% else %}
+                                <i class="fas fa-user-slash text-muted"></i>
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Created</label>
+                        <div class="date-info">
+                            <i class="fas fa-calendar-plus"></i>
+                            {{ task.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                    </div>
+                    
+                    <div class="meta-item">
+                        <label>Last Updated</label>
+                        <div class="date-info">
+                            <i class="fas fa-calendar-edit"></i>
+                            {{ task.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task Progress Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Progress
+                </h3>
+            </div>
+            <div class="card-body text-center">
+                <div class="progress-circle">
+                    {% if task.status == 'To Do' %}
+                        <div class="circle-progress" data-progress="0">
+                            <span>0%</span>
+                        </div>
+                        <p class="progress-label">Not Started</p>
+                    {% elif task.status == 'In Progress' %}
+                        <div class="circle-progress" data-progress="50">
+                            <span>50%</span>
+                        </div>
+                        <p class="progress-label">In Progress</p>
+                    {% elif task.status == 'Done' %}
+                        <div class="circle-progress" data-progress="100">
+                            <span>100%</span>
+                        </div>
+                        <p class="progress-label">Completed</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.task-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+}
+
+.task-actions-header {
+    display: flex;
+    gap: 10px;
+}
+
+.task-description-full {
+    line-height: 1.6;
+}
+
+.task-description-full h4 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.description-content {
+    color: var(--text-secondary);
+    background-color: var(--surface-secondary);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.no-description {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.no-description i {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.task-meta-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-item label {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.user-info, .date-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.progress-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.circle-progress {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary-color) 0deg, var(--surface-secondary) 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.circle-progress::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--surface-color);
+}
+
+.circle-progress span {
+    position: relative;
+    z-index: 1;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progress-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Progress circle animations */
+.circle-progress[data-progress="0"] {
+    background: conic-gradient(var(--surface-secondary) 0deg, var(--surface-secondary) 360deg);
+}
+
+.circle-progress[data-progress="50"] {
+    background: conic-gradient(var(--warning-color) 0deg, var(--warning-color) 180deg, var(--surface-secondary) 180deg);
+}
+
+.circle-progress[data-progress="100"] {
+    background: conic-gradient(var(--success-color) 0deg, var(--success-color) 360deg);
+}
+
+@media (max-width: 1024px) {
+    .task-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .sidebar-area {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-header .flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .task-actions-header {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+    
+    .action-buttons .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animations to progress circles
+    const progressCircles = document.querySelectorAll('.circle-progress');
+    progressCircles.forEach(circle => {
+        const progress = parseInt(circle.getAttribute('data-progress'));
+        if (progress > 0) {
+            circle.style.animation = 'progressAnimation 1s ease-in-out';
+        }
+    });
+    
+    // Handle status update buttons
+    const statusButtons = document.querySelectorAll('.status-btn');
+    statusButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            const newStatus = this.getAttribute('data-status');
+            updateTaskStatus(taskId, newStatus);
+        });
+    });
+    
+    // Handle delete button
+    const deleteBtn = document.getElementById('deleteTaskBtn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            deleteTask(taskId);
+        });
+    }
+});
+
+// Add CSS animation for progress circle
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes progressAnimation {
+        0% {
+            transform: scale(0.8);
+            opacity: 0.7;
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
+{% endblock %}

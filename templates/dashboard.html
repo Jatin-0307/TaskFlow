@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TaskFlow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">
+        <i class="fas fa-tachometer-alt"></i>
+        Welcome back, {{ current_user.username }}!
+    </h1>
+    <p class="page-subtitle">Manage your tasks and track your progress</p>
+</div>
+
+<!-- Quick Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ user_tasks|length }}</div>
+        <div class="stat-label">
+            <i class="fas fa-tasks"></i>
+            Created Tasks
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ assigned_tasks|length }}</div>
+        <div class="stat-label">
+            <i class="fas fa-user-tag"></i>
+            Assigned Tasks
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            {{ (user_tasks + assigned_tasks)|selectattr("status", "equalto", "In Progress")|list|length }}
+        </div>
+        <div class="stat-label">
+            <i class="fas fa-spinner"></i>
+            In Progress
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">
+            {{ (user_tasks + assigned_tasks)|selectattr("status", "equalto", "Done")|list|length }}
+        </div>
+        <div class="stat-label">
+            <i class="fas fa-check-circle"></i>
+            Completed
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-bolt"></i>
+            Quick Actions
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="flex gap-4">
+            <a href="{{ url_for('create_task') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Create New Task
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                <i class="fas fa-refresh"></i>
+                Refresh Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Tasks Created by User -->
+{% if user_tasks %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-tasks"></i>
+            Tasks You Created ({{ user_tasks|length }})
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="task-grid">
+            {% for task in user_tasks %}
+            <div class="task-card">
+                <div class="task-time">{{ task.get_time_since_created() }}</div>
+                <h3 class="task-title">
+                    <a href="{{ url_for('view_task', task_id=task.id) }}">{{ task.title }}</a>
+                </h3>
+                <p class="task-description">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                
+                <div class="task-meta">
+                    <span class="task-status {{ task.get_status_color() }}">
+                        {{ task.status }}
+                    </span>
+                    <span class="task-priority {{ task.get_priority_color() }}">
+                        {{ task.priority }}
+                    </span>
+                    {% if task.assignee %}
+                        <span class="task-assignee">
+                            <i class="fas fa-user"></i>
+                            {{ task.get_assignee_name() }}
+                        </span>
+                    {% else %}
+                        <span class="task-assignee text-muted">
+                            <i class="fas fa-user-slash"></i>
+                            Unassigned
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <div class="task-actions">
+                    <a href="{{ url_for('view_task', task_id=task.id) }}" class="btn btn-sm btn-outline">
+                        <i class="fas fa-eye"></i>
+                        View
+                    </a>
+                    <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-edit"></i>
+                        Edit
+                    </a>
+                    {% if task.status != 'Done' %}
+                        <button class="btn btn-sm btn-success status-btn" data-task-id="{{ task.id }}" data-status="Done">
+                            <i class="fas fa-check"></i>
+                            Complete
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-tasks"></i>
+            Tasks You Created
+        </h2>
+    </div>
+    <div class="card-body text-center">
+        <div class="empty-state">
+            <i class="fas fa-tasks" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+            <h3>No Tasks Created Yet</h3>
+            <p class="text-muted">Get started by creating your first task!</p>
+            <a href="{{ url_for('create_task') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Create Your First Task
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tasks Assigned to User -->
+{% if assigned_tasks %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-user-tag"></i>
+            Tasks Assigned to You ({{ assigned_tasks|length }})
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="task-grid">
+            {% for task in assigned_tasks %}
+            <div class="task-card">
+                <div class="task-time">{{ task.get_time_since_created() }}</div>
+                <h3 class="task-title">
+                    <a href="{{ url_for('view_task', task_id=task.id) }}">{{ task.title }}</a>
+                </h3>
+                <p class="task-description">{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</p>
+                
+                <div class="task-meta">
+                    <span class="task-status {{ task.get_status_color() }}">
+                        {{ task.status }}
+                    </span>
+                    <span class="task-priority {{ task.get_priority_color() }}">
+                        {{ task.priority }}
+                    </span>
+                    <span class="task-assignee">
+                        <i class="fas fa-user-plus"></i>
+                        Created by {{ task.get_creator_name() }}
+                    </span>
+                </div>
+                
+                <div class="task-actions">
+                    <a href="{{ url_for('view_task', task_id=task.id) }}" class="btn btn-sm btn-outline">
+                        <i class="fas fa-eye"></i>
+                        View
+                    </a>
+                    {% if task.status == 'To Do' %}
+                        <button class="btn btn-sm btn-warning status-btn" data-task-id="{{ task.id }}" data-status="In Progress">
+                            <i class="fas fa-play"></i>
+                            Start
+                        </button>
+                    {% elif task.status == 'In Progress' %}
+                        <button class="btn btn-sm btn-success status-btn" data-task-id="{{ task.id }}" data-status="Done">
+                            <i class="fas fa-check"></i>
+                            Complete
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fas fa-user-tag"></i>
+            Tasks Assigned to You
+        </h2>
+    </div>
+    <div class="card-body text-center">
+        <div class="empty-state">
+            <i class="fas fa-user-tag" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 20px;"></i>
+            <h3>No Tasks Assigned</h3>
+            <p class="text-muted">No tasks have been assigned to you yet. Check back later!</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.empty-state {
+    padding: 40px 20px;
+}
+
+.empty-state h3 {
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.task-grid {
+    margin-top: 0;
+}
+
+.task-card {
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle status update buttons
+    const statusButtons = document.querySelectorAll('.status-btn');
+    statusButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            const newStatus = this.getAttribute('data-status');
+            updateTaskStatus(taskId, newStatus);
+        });
+    });
+});
+</script>
+{% endblock %}
